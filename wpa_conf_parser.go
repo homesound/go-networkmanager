@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Regex testing was done on: https://regex101.com/r/RZzdwY/1
 var networkRegex = regexp.MustCompile("(?s)network={(?P<network>.*?)}")
 var ssidRegex = regexp.MustCompile(`^ssid="(?P<ssid>.*)"`)
 var pskRegex = regexp.MustCompile(`^psk=(?P<psk>.*)`)
