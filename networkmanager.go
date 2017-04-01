@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/theojulienne/go-wireless/iwlib"
+	"github.com/gurupras/go-wireless/iwlib"
 )
 
 type NetworkManager struct {
