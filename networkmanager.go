@@ -1,12 +1,18 @@
 package network_manager
 
 import (
-	"errors"
+	"fmt"
 	"net"
 	"strings"
 
+	"github.com/google/shlex"
 	"github.com/gurupras/go-wireless/iwlib"
+	"github.com/gurupras/gocommons"
 )
+
+type WifiScanResult struct {
+	*iwlib.WirelessScanResult
+}
 
 type NetworkManager struct {
 }
@@ -60,20 +66,41 @@ func (nm *NetworkManager) IsWifiConnected() (bool, error) {
 		}
 	}
 	if !found {
-		return false, errors.New("Did not find a wlan interface")
+		return false, fmt.Errorf("Did not find a wlan interface")
 	}
 	return false, nil
 }
 
-func (nm *NetworkManager) WifiScan(iface string) ([]string, error) {
-
-	networks, err := iwlib.GetWirelessNetworks(iface)
+func (nm *NetworkManager) WifiScan(iface string) ([]*WifiScanResult, error) {
+	scanResults, err := iwlib.GetWirelessNetworks(iface)
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]string, 0)
-	for _, network := range networks {
-		ret = append(ret, network.SSID)
+	results := make([]*WifiScanResult, len(scanResults))
+	for idx, res := range scanResults {
+		results[idx] = &WifiScanResult{res}
 	}
-	return ret, nil
+	return results, nil
+}
+
+func (nm *NetworkManager) IfUp(iface string) error {
+	return nm.ifconfig(iface, "up")
+}
+
+func (nm *NetworkManager) IfDown(iface string) error {
+	return nm.ifconfig(iface, "down")
+}
+
+func (nm *NetworkManager) ifconfig(iface string, state string) error {
+	commandStr := fmt.Sprintf("ifconfig %v %v", iface, state)
+	cmdline, err := shlex.Split(commandStr)
+	if err != nil {
+		return fmt.Errorf("Failed to split commandline: '%v': %v", commandStr, err)
+	}
+	ret, stdout, stderr := gocommons.Execv(cmdline[0], cmdline[1:], true)
+	_ = stdout
+	if ret != 0 {
+		return fmt.Errorf(stderr)
+	}
+	return nil
 }
