@@ -1,11 +1,13 @@
 package network_manager
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"strings"
 
 	"github.com/google/shlex"
+	"github.com/gurupras/go-simpleexec"
 	"github.com/gurupras/go-wireless/iwlib"
 	"github.com/gurupras/gocommons"
 )
@@ -103,4 +105,16 @@ func (nm *NetworkManager) ifconfig(iface string, state string) error {
 		return fmt.Errorf(stderr)
 	}
 	return nil
+}
+
+func (nm *NetworkManager) IPAddress(iface string) (string, error) {
+	// /sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'
+	cmd := simpleexec.ParseCmd(fmt.Sprintf("/sbin/ifconfig %v", iface)).Pipe("grep 'inet addr:'").Pipe("cut -d: -f2").Pipe("awk '{ print $1}'")
+
+	buf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	cmd.Start()
+	cmd.Wait()
+
+	return strings.TrimSpace(buf.String()), nil
 }

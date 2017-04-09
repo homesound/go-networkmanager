@@ -88,3 +88,12 @@ func TestWifiScan(t *testing.T) {
 	require.Nil(err)
 	require.NotZero(len(v))
 }
+
+func TestIPAddress(t *testing.T) {
+	require := require.New(t)
+
+	nm := New()
+	ip, err := nm.IPAddress("lo")
+	require.Nil(err)
+	require.NotEqual("", ip)
+}
