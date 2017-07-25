@@ -3,6 +3,7 @@ package network_manager
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"strings"
 
@@ -21,6 +22,11 @@ type NetworkManager struct {
 
 func New() *NetworkManager {
 	return &NetworkManager{}
+}
+
+func (nm *NetworkManager) Hostname() (string, error) {
+	data, err := ioutil.ReadFile("/etc/hostname")
+	return string(data), err
 }
 
 func (nm *NetworkManager) ListInterfaces() ([]string, error) {

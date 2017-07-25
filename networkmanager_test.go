@@ -9,6 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestHostname(t *testing.T) {
+	require := require.New(t)
+
+	nm := New()
+	hostname, err := nm.Hostname()
+	require.Nil(err)
+	require.NotEmpty(hostname)
+}
+
 func TestIfUp(t *testing.T) {
 	require := require.New(t)
 
