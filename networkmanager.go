@@ -26,7 +26,7 @@ func New() *NetworkManager {
 
 func (nm *NetworkManager) Hostname() (string, error) {
 	data, err := ioutil.ReadFile("/etc/hostname")
-	return string(data), err
+	return strings.TrimSpace(string(data)), err
 }
 
 func (nm *NetworkManager) ListInterfaces() ([]string, error) {
