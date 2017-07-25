@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	nm := network_manager.New()
+	nm := networkmanager.New()
 
 	wifiIfaces, err := nm.GetWifiInterfaces()
 	if err != nil {

@@ -1,4 +1,4 @@
-package network_manager
+package networkmanager
 
 import (
 	"testing"
