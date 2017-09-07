@@ -7,10 +7,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/google/shlex"
 	"github.com/gurupras/go-simpleexec"
 	"github.com/gurupras/go-wireless/iwlib"
-	"github.com/gurupras/gocommons"
 	"github.com/sirupsen/logrus"
 )
 
@@ -116,15 +114,9 @@ func (nm *NetworkManager) IfDown(iface string) error {
 }
 
 func (nm *NetworkManager) ifconfig(iface string, state string) error {
-	commandStr := fmt.Sprintf("ifconfig %v %v", iface, state)
-	cmdline, err := shlex.Split(commandStr)
-	if err != nil {
-		return fmt.Errorf("Failed to split commandline: '%v': %v", commandStr, err)
-	}
-	ret, stdout, stderr := gocommons.Execv(cmdline[0], cmdline[1:], true)
-	_ = stdout
-	if ret != 0 {
-		return fmt.Errorf(stderr)
+	cmd := simpleexec.ParseCmd(fmt.Sprintf("ifconfig %v %v", iface, state))
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -135,8 +127,8 @@ func (nm *NetworkManager) IPAddress(iface string) (string, error) {
 
 	buf := bytes.NewBuffer(nil)
 	cmd.Stdout = buf
-	cmd.Start()
-	cmd.Wait()
-
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
 	return strings.TrimSpace(buf.String()), nil
 }
