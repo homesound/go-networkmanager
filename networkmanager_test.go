@@ -1,13 +1,23 @@
 package networkmanager
 
 import (
+	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/shlex"
-	"github.com/gurupras/gocommons"
+	simpleexec "github.com/gurupras/go-simpleexec"
 	"github.com/stretchr/testify/require"
 )
+
+func getWifiInterface(nm *NetworkManager) (string, error) {
+	wifiInterfaces, err := nm.GetWifiInterfaces()
+	if err != nil {
+		return "", err
+	}
+	iface := wifiInterfaces[0]
+	return iface, err
+}
 
 func TestHostname(t *testing.T) {
 	require := require.New(t)
@@ -22,30 +32,36 @@ func TestIfUp(t *testing.T) {
 	require := require.New(t)
 
 	nm := New()
-	err := nm.IfUp("wlan0")
+	iface, err := getWifiInterface(nm)
 	require.Nil(err)
+	err = nm.IfUp(iface)
+	require.Nil(err, fmt.Sprintf("Failed: %v", err))
 
 	// Now, check if it is up
-	cmd, _ := shlex.Split("iw dev wlan0 link")
-	ret, stdout, stderr := gocommons.Execv(cmd[0], cmd[1:], true)
-	_ = stderr
-	require.Zero(ret)
-	require.NotEqual("Not connected.\n", stdout)
+	cmd := simpleexec.ParseCmd(fmt.Sprintf("iw dev %v link", iface))
+	buf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	err = cmd.Run()
+	require.Nil(err)
+	//require.NotEqual("Not connected.\n", buf.String())
 }
 
 func TestIfDown(t *testing.T) {
 	require := require.New(t)
 
 	nm := New()
-	err := nm.IfDown("wlan0")
+	iface, err := getWifiInterface(nm)
+	require.Nil(err)
+	err = nm.IfDown(iface)
 	require.Nil(err)
 
 	// Now, check if it is up
-	cmd, _ := shlex.Split("iw dev wlan0 link")
-	ret, stdout, stderr := gocommons.Execv(cmd[0], cmd[1:], true)
-	_ = stderr
-	require.Zero(ret)
-	require.Equal("Not connected.\n", stdout)
+	cmd := simpleexec.ParseCmd(fmt.Sprintf("iw dev %v link", iface))
+	buf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	err = cmd.Run()
+	require.Nil(err)
+	require.Equal("Not connected.\n", buf.String())
 
 	// Bring it back up
 	nm.IfUp("wlan0")
@@ -64,7 +80,9 @@ func TestIsWifiConnected(t *testing.T) {
 
 	nm := New()
 
-	err := nm.IfUp("wlan0")
+	iface, err := getWifiInterface(nm)
+	require.Nil(err)
+	err = nm.IfUp(iface)
 	require.Nil(err)
 
 	v, err := nm.IsWifiConnected()
@@ -86,14 +104,16 @@ func TestWifiScan(t *testing.T) {
 
 	// Should fail
 	nm := New()
-	v, err := nm.WifiScan("wlan8")
+	v, err := nm.WifiScan("lo")
 	require.NotNil(err)
 	require.Zero(len(v))
 
-	err = nm.IfUp("wlan0")
+	iface, err := getWifiInterface(nm)
+	require.Nil(err)
+	err = nm.IfUp(iface)
 	require.Nil(err)
 
-	v, err = nm.WifiScan("wlan0")
+	v, err = nm.WifiScan(iface)
 	require.Nil(err)
 	require.NotZero(len(v))
 }
