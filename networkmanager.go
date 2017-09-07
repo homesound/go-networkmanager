@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/set"
 	"github.com/gurupras/go-simpleexec"
 	"github.com/gurupras/go-wireless/iwlib"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type WifiScanResult struct {
@@ -44,7 +44,7 @@ func (nm *NetworkManager) ListInterfaces() ([]string, error) {
 // Get a list of Wi-Fi interfaces
 // This function works in a very complicated manner
 // We first get a list of available interfaces via ListInterfaces
-// and then ask iwgetid to list out the channel for each of them
+// and then ask iwgetid to list out the protocol for each of them
 // Non-wireless interfaces throw errors whereas wireless interfaces
 // return data
 func (nm *NetworkManager) GetWifiInterfaces() ([]string, error) {
@@ -54,15 +54,15 @@ func (nm *NetworkManager) GetWifiInterfaces() ([]string, error) {
 	}
 	wifiInterfaces := make([]string, 0)
 	for _, iface := range ifaces {
-		cmd := simpleexec.ParseCmd(fmt.Sprintf("/sbin/iwgetid -c %v", iface))
+		cmd := simpleexec.ParseCmd(fmt.Sprintf("/sbin/iwgetid -p %v", iface))
 		buf := bytes.NewBuffer(nil)
 		cmd.Stdout = buf
 		if err := cmd.Run(); err != nil {
 			// XXX: This is assumed to be due to 'iface' not being a Wi-Fi interface
 			//return nil, fmt.Errorf("Failed to query interface '%v': %v", iface, err)
-			logrus.Debugf("Failed to query interface '%v': %v", iface, err)
+			log.Debugf("Failed to query interface '%v': %v", iface, err)
 		} else {
-			if buf.Len() != 0 && strings.Contains(buf.String(), "Channel") {
+			if buf.Len() != 0 {
 				wifiInterfaces = append(wifiInterfaces, iface)
 			}
 		}
