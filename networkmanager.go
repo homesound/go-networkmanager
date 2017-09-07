@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/fatih/set"
 	"github.com/gurupras/go-simpleexec"
 	"github.com/gurupras/go-wireless/iwlib"
 	"github.com/sirupsen/logrus"
@@ -74,9 +75,19 @@ func (nm *NetworkManager) IsWifiConnected() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	wifiInterfaces, err := nm.GetWifiInterfaces()
+	if err != nil {
+		return false, err
+	}
+
+	wifiIfaceSet := set.NewNonTS()
+	for _, iface := range wifiInterfaces {
+		wifiIfaceSet.Add(iface)
+	}
+
 	found := false
 	for _, iface := range ifaces {
-		if strings.Contains(iface.Name, "wlan") {
+		if wifiIfaceSet.Has(iface.Name) {
 			found = true
 			addrs, err := iface.Addrs()
 			if err != nil {
